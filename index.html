@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>하루동행 챗봇 MVP</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="app">
+    <h1 class="title">하루동행 챗봇</h1>
+
+    <div id="home">
+      <button class="menu-btn" onclick="go('mood')">기분 기록하기</button>
+      <button class="menu-btn" onclick="go('health')">건강 체크하기</button>
+      <button class="menu-btn" onclick="go('caregiver')">보호자 메시지 보내기</button>
+    </div>
+
+    <div id="chat" style="display:none;">
+      <button class="back-btn" onclick="backHome()">← 뒤로가기</button>
+      <div id="chatLog" class="chat-log"></div>
+
+      <div class="input-box">
+        <input id="msgInput" type="text" placeholder="메시지를 입력하세요" />
+        <button onclick="sendMessage()">전송</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
