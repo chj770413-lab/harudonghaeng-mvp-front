@@ -2,16 +2,18 @@ const API_URL = "https://harudonghaeng-ai-proxy.vercel.app/api/chat";
 
 let currentMode = "";
 
-// ✅ 숫자 확인 단계 상태
+// 🔒 숫자 확인 단계 플래그 (단 하나만 사용)
 let pendingNumericConfirm = false;
 
+// ----------------------------
 // 화면 전환
+// ----------------------------
 function go(mode) {
   currentMode = mode;
   document.getElementById("home").style.display = "none";
   document.getElementById("chat").style.display = "block";
 
-  let startMessage =
+  const startMessage =
     mode === "mood"
       ? "오늘 기분은 어떠신가요?"
       : mode === "health"
@@ -28,6 +30,9 @@ function backHome() {
   pendingNumericConfirm = false;
 }
 
+// ----------------------------
+// 메시지 표시
+// ----------------------------
 function addMessage(who, text) {
   const chatLog = document.getElementById("chatLog");
   const div = document.createElement("div");
@@ -36,22 +41,15 @@ function addMessage(who, text) {
   chatLog.appendChild(div);
   chatLog.scrollTop = chatLog.scrollHeight;
 
-  // ✅ 서버가 숫자 확인 문구를 냈을 때만 true
-  if (who === "bot" && text.includes("제가 이렇게 들었어요")) {
+  // 🔑 서버가 숫자 확인 문구를 보냈을 때만 true
+  if (who === "bot" && text.startsWith("제가 이렇게 들었어요")) {
     pendingNumericConfirm = true;
-    return;
-  }
-
-  // ✅ 서버가 설명 단계로 들어갔다고 판단되는 순간에만 false
-  if (
-    who === "bot" &&
-    pendingNumericConfirm &&
-    !text.includes("제가 이렇게 들었어요")
-  ) {
-    pendingNumericConfirm = false;
   }
 }
 
+// ----------------------------
+// 메시지 전송
+// ----------------------------
 async function sendMessage() {
   const input = document.getElementById("msgInput");
   const text = input.value.trim();
@@ -60,42 +58,38 @@ async function sendMessage() {
   addMessage("user", text);
   input.value = "";
 
-  // 🔴 핵심 1: 숫자 확인 단계에서 "맞아 / 아니야 / 응 맞아"는 AI로 보내지 않음
+  // ==========================================
+  // 🔴 핵심: 숫자 확인 단계에서는
+  // 사용자의 "맞아/아니야/응 맞아"를
+  // ❌ 절대 AI로 보내지 않는다
+  // ==========================================
   if (pendingNumericConfirm) {
-    // 느슨한 동의 포함 전부 처리
+    const normalized = text.replace(/\s+/g, "");
+
     if (
-      text === "맞아" ||
-      text === "아니야" ||
-      text === "응 맞아" ||
-      text === "응"
+      normalized === "맞아" ||
+      normalized === "아니야" ||
+      normalized === "응맞아" ||
+      normalized === "응"
     ) {
-      // 확인 단계 종료
+      // 🔒 확인 단계 종료
       pendingNumericConfirm = false;
 
-      // ✅ AI에게는 "확인 완료 후 설명 요청"만 새로 보냄
-      try {
-        const res = await fetch(API_URL, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            // ❗ 사용자 발화 대신, 우리가 만든 문장을 보냄
-            message: "확인된 수치에 대해 설명해 주세요.",
-            mode: currentMode,
-            pendingNumericConfirm: false,
-          }),
-        });
-
-        const data = await res.json();
-        addMessage("bot", data.reply || "응답이 없습니다.");
-        return; // ❗ 여기서 반드시 종료
-      } catch (err) {
-        addMessage("bot", "서버 연결 오류가 발생했습니다.");
-        return;
-      }
+      // ✅ AI에게는 반드시 '명확한 설명 요청'만 보낸다
+      return requestExplanation();
     }
+
+    // 다른 말이면 다시 안내
+    addMessage(
+      "bot",
+      "확인을 위해서요.\n맞으면 '맞아', 아니면 '아니야'라고 말씀해 주세요."
+    );
+    return;
   }
 
-  // 🔵 일반 메시지 흐름 (숫자 확인 단계 아님)
+  // ==========================================
+  // 🔵 일반 메시지 흐름
+  // ==========================================
   try {
     const res = await fetch(API_URL, {
       method: "POST",
@@ -103,7 +97,7 @@ async function sendMessage() {
       body: JSON.stringify({
         message: text,
         mode: currentMode,
-        pendingNumericConfirm: pendingNumericConfirm,
+        pendingNumericConfirm: false,
       }),
     });
 
@@ -113,3 +107,28 @@ async function sendMessage() {
     addMessage("bot", "서버 연결 오류가 발생했습니다.");
   }
 }
+
+// ----------------------------
+// 🔧 설명 요청 전용 함수 (중요)
+// ----------------------------
+async function requestExplanation() {
+  try {
+    const res = await fetch(API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        // ❗ 절대 모호한 문장 금지
+        message:
+          "확인된 건강 수치에 대해, 한 번의 수치로 단정하지 말고 2~3문장으로 설명해 주세요. 마지막에 질문 1개만 해 주세요.",
+        mode: currentMode,
+        pendingNumericConfirm: false,
+      }),
+    });
+
+    const data = await res.json();
+    addMessage("bot", data.reply || "응답이 없습니다.");
+  } catch (err) {
+    addMessage("bot", "서버 연결 오류가 발생했습니다.");
+  }
+}
+
