@@ -60,9 +60,42 @@ async function sendMessage() {
   addMessage("user", text);
   input.value = "";
 
-  // ⚠️ 중요: 여기서는 pendingNumericConfirm를 절대 바꾸지 않는다
-  // → 서버로 "현재 상태" 그대로 보낸다
+  // 🔴 핵심 1: 숫자 확인 단계에서 "맞아 / 아니야 / 응 맞아"는 AI로 보내지 않음
+  if (pendingNumericConfirm) {
+    // 느슨한 동의 포함 전부 처리
+    if (
+      text === "맞아" ||
+      text === "아니야" ||
+      text === "응 맞아" ||
+      text === "응"
+    ) {
+      // 확인 단계 종료
+      pendingNumericConfirm = false;
 
+      // ✅ AI에게는 "확인 완료 후 설명 요청"만 새로 보냄
+      try {
+        const res = await fetch(API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            // ❗ 사용자 발화 대신, 우리가 만든 문장을 보냄
+            message: "확인된 수치에 대해 설명해 주세요.",
+            mode: currentMode,
+            pendingNumericConfirm: false,
+          }),
+        });
+
+        const data = await res.json();
+        addMessage("bot", data.reply || "응답이 없습니다.");
+        return; // ❗ 여기서 반드시 종료
+      } catch (err) {
+        addMessage("bot", "서버 연결 오류가 발생했습니다.");
+        return;
+      }
+    }
+  }
+
+  // 🔵 일반 메시지 흐름 (숫자 확인 단계 아님)
   try {
     const res = await fetch(API_URL, {
       method: "POST",
@@ -70,19 +103,12 @@ async function sendMessage() {
       body: JSON.stringify({
         message: text,
         mode: currentMode,
-
-        // ✅ 현재 상태 그대로 서버에 전달
         pendingNumericConfirm: pendingNumericConfirm,
       }),
     });
 
     const data = await res.json();
     addMessage("bot", data.reply || "응답이 없습니다.");
-
-    // ✅ 서버 응답을 받은 뒤에만 상태 종료
-    if (pendingNumericConfirm && (text === "맞아" || text === "아니야")) {
-      pendingNumericConfirm = false;
-    }
   } catch (err) {
     addMessage("bot", "서버 연결 오류가 발생했습니다.");
   }
