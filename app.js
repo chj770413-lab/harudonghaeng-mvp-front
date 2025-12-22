@@ -1,8 +1,13 @@
 const API_URL = "https://harudonghaeng-ai-proxy.vercel.app/api/chat";
 
 let currentMode = "";
+
+// ✅ 숫자 확인 상태/숫자 저장
 let pendingNumericConfirm = false;
 let heardNumber = null;
+
+// ✅ 대화 히스토리(서버로 보내서 "기억"하게 함)
+let chatHistory = []; // [{role:"user"|"assistant", content:"..."}]
 
 // 화면 전환
 function go(mode) {
@@ -24,8 +29,11 @@ function backHome() {
   document.getElementById("chat").style.display = "none";
   document.getElementById("home").style.display = "block";
   document.getElementById("chatLog").innerHTML = "";
+
+  // ✅ 초기화
   pendingNumericConfirm = false;
   heardNumber = null;
+  chatHistory = [];
 }
 
 function addMessage(who, text) {
@@ -36,19 +44,11 @@ function addMessage(who, text) {
   chatLog.appendChild(div);
   chatLog.scrollTop = chatLog.scrollHeight;
 
-  // 서버가 숫자 확인 문구를 보냈을 때
-  if (who === "bot" && text.includes("제가 이렇게 들었어요")) {
-    pendingNumericConfirm = true;
-    const match = text.match(/\d{2,3}/);
-    heardNumber = match ? Number(match[0]) : null;
-  }
-}
-
-function getConfirmAction(text) {
-  if (/^(맞아|네|예)$/i.test(text)) return "yes";
-  if (/^(아니야|아니|틀려|다시)$/i.test(text)) return "no";
-  if (/응|맞는 것 같아/i.test(text)) return "loose";
-  return null;
+  // ✅ 히스토리 쌓기
+  chatHistory.push({
+    role: who === "bot" ? "assistant" : "user",
+    content: text,
+  });
 }
 
 async function sendMessage() {
@@ -59,10 +59,6 @@ async function sendMessage() {
   addMessage("user", text);
   input.value = "";
 
-  const confirmAction = pendingNumericConfirm
-    ? getConfirmAction(text)
-    : null;
-
   try {
     const res = await fetch(API_URL, {
       method: "POST",
@@ -71,19 +67,21 @@ async function sendMessage() {
         message: text,
         mode: currentMode,
 
-        // ✅ 핵심 상태 신호들
+        // ✅ 핵심 1: 서버에 히스토리 보내기 (기억)
+        messages: chatHistory,
+
+        // ✅ 핵심 2: 숫자 확인 상태 + 들은 숫자 보내기
         pendingNumericConfirm,
         heardNumber,
-        confirmAction,
       }),
     });
 
     const data = await res.json();
 
-    // 서버가 다시 확인 단계 유지하라고 하면
+    // ✅ 서버가 "확인 단계"를 내려주면 프론트 상태 업데이트
     if (data.needConfirm === true) {
       pendingNumericConfirm = true;
-      heardNumber = data.heardNumber ?? heardNumber;
+      heardNumber = Number.isFinite(data.heardNumber) ? data.heardNumber : heardNumber;
     } else {
       pendingNumericConfirm = false;
       heardNumber = null;
