@@ -59,36 +59,53 @@ async function sendMessage() {
   addMessage("user", text);
   input.value = "";
 
-  try {
-    const res = await fetch(API_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        message: text,
-        mode: currentMode,
+  // ✅ 확인 단계일 때
+  if (pendingNumericConfirm) {
+    let action = null;
 
-        // ✅ 핵심 1: 서버에 히스토리 보내기 (기억)
-        messages: chatHistory,
-
-        // ✅ 핵심 2: 숫자 확인 상태 + 들은 숫자 보내기
-        pendingNumericConfirm,
-        heardNumber,
-      }),
-    });
-
-    const data = await res.json();
-
-    // ✅ 서버가 "확인 단계"를 내려주면 프론트 상태 업데이트
-    if (data.needConfirm === true) {
-      pendingNumericConfirm = true;
-      heardNumber = Number.isFinite(data.heardNumber) ? data.heardNumber : heardNumber;
-    } else {
-      pendingNumericConfirm = false;
-      heardNumber = null;
+    if (text === "맞아" || text === "응 맞아" || text === "네") {
+      action = "yes";
+    } else if (text === "아니야" || text === "아니") {
+      action = "no";
     }
 
-    addMessage("bot", data.reply || "응답이 없습니다.");
-  } catch (err) {
-    addMessage("bot", "서버 연결 오류가 발생했습니다.");
+    // 👉 확인 응답이면 "사용자 발화"는 AI로 안 보냄
+    if (action) {
+      const res = await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          confirmAction: action,
+          pendingNumericConfirm: true,
+          heardNumber: lastHeardNumber, // 👈 반드시 유지
+          mode: currentMode,
+        }),
+      });
+
+      const data = await res.json();
+      addMessage("bot", data.reply);
+      pendingNumericConfirm = data.needConfirm === true;
+      return;
+    }
+  }
+
+  // 🔵 일반 메시지
+  const res = await fetch(API_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      message: text,
+      pendingNumericConfirm,
+      heardNumber: lastHeardNumber,
+      mode: currentMode,
+    }),
+  });
+
+  const data = await res.json();
+  addMessage("bot", data.reply);
+
+  if (data.needConfirm) {
+    pendingNumericConfirm = true;
+    lastHeardNumber = data.heardNumber;
   }
 }
