@@ -1,9 +1,7 @@
 const API_URL = "https://harudonghaeng-ai-proxy.vercel.app/api/chat";
 
 let currentMode = "";
-
-// 숫자 확인 단계 여부
-let isNumericConfirmMode = false;
+let pendingNumericConfirm = false;
 
 // 화면 전환
 function go(mode) {
@@ -11,7 +9,7 @@ function go(mode) {
   document.getElementById("home").style.display = "none";
   document.getElementById("chat").style.display = "block";
 
-  let startMessage =
+  const startMessage =
     mode === "mood"
       ? "오늘 기분은 어떠신가요?"
       : mode === "health"
@@ -25,7 +23,7 @@ function backHome() {
   document.getElementById("chat").style.display = "none";
   document.getElementById("home").style.display = "block";
   document.getElementById("chatLog").innerHTML = "";
-  isNumericConfirmMode = false;
+  pendingNumericConfirm = false;
 }
 
 function addMessage(who, text) {
@@ -36,52 +34,20 @@ function addMessage(who, text) {
   chatLog.appendChild(div);
   chatLog.scrollTop = chatLog.scrollHeight;
 
-  // 🔒 AI가 숫자 확인 문구를 냈을 때만 확인 모드 진입
+  // 서버가 숫자 확인 문구를 보냈을 때만 true
   if (who === "bot" && text.includes("제가 이렇게 들었어요")) {
-    isNumericConfirmMode = true;
+    pendingNumericConfirm = true;
   }
 }
 
 async function sendMessage() {
   const input = document.getElementById("msgInput");
-  const userText = input.value.trim();
-  if (!userText) return;
+  const text = input.value.trim();
+  if (!text) return;
 
-  addMessage("user", userText);
+  addMessage("user", text);
   input.value = "";
 
-  // 🔴 핵심 차단 로직
-  // 숫자 확인 단계에서는 어떤 확인 발화도 서버로 보내지 않음
-  if (isNumericConfirmMode) {
-    // 사용자가 확인 의도로 말한 경우
-    if (
-      userText.includes("맞아") ||
-      userText.includes("응") ||
-      userText.includes("그래")
-    ) {
-      isNumericConfirmMode = false;
-
-      // ❗ 서버에는 항상 동일한 문장만 보냄
-      await sendToServer("확인된 수치에 대해 설명해 주세요.");
-      return;
-    }
-
-    // 수정 의도
-    if (userText.includes("아니")) {
-      isNumericConfirmMode = false;
-      addMessage(
-        "bot",
-        "괜찮아요. 숫자를 한 자리씩 천천히 다시 말씀해 주세요."
-      );
-      return;
-    }
-  }
-
-  // 🟢 일반 메시지
-  await sendToServer(userText);
-}
-
-async function sendToServer(text) {
   try {
     const res = await fetch(API_URL, {
       method: "POST",
@@ -89,6 +55,7 @@ async function sendToServer(text) {
       body: JSON.stringify({
         message: text,
         mode: currentMode,
+        pendingNumericConfirm, // ✅ 상태만 전달
       }),
     });
 
