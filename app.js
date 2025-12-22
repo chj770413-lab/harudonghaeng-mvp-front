@@ -1,10 +1,19 @@
 const API_URL = "https://harudonghaeng-ai-proxy.vercel.app/api/chat";
 
 let currentMode = "";
-let messages = []; // ✅ 대화 히스토리
+let pendingNumericConfirm = false;
+let heardNumber = null;
 
+// ✅ 대화 히스토리 (이게 핵심)
+let messages = [];
+
+// 화면 전환
 function go(mode) {
   currentMode = mode;
+  messages = [];
+  pendingNumericConfirm = false;
+  heardNumber = null;
+
   document.getElementById("home").style.display = "none";
   document.getElementById("chat").style.display = "block";
 
@@ -22,9 +31,13 @@ function backHome() {
   document.getElementById("chat").style.display = "none";
   document.getElementById("home").style.display = "block";
   document.getElementById("chatLog").innerHTML = "";
+
   messages = [];
+  pendingNumericConfirm = false;
+  heardNumber = null;
 }
 
+// 화면 출력 + 히스토리 저장
 function addMessage(role, text) {
   const chatLog = document.getElementById("chatLog");
   const div = document.createElement("div");
@@ -33,8 +46,14 @@ function addMessage(role, text) {
   chatLog.appendChild(div);
   chatLog.scrollTop = chatLog.scrollHeight;
 
-  // ✅ 히스토리에 저장
   messages.push({ role, content: text });
+
+  // 숫자 확인 단계 진입
+  if (role === "assistant" && text.includes("제가 이렇게 들었어요")) {
+    pendingNumericConfirm = true;
+    const match = text.match(/\d+/);
+    heardNumber = match ? Number(match[0]) : null;
+  }
 }
 
 async function sendMessage() {
@@ -50,8 +69,10 @@ async function sendMessage() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        messages,          // ✅ 핵심
-        mode: currentMode
+        message: text,
+        messages,                 // ✅ 핵심
+        pendingNumericConfirm,    // 상태 전달
+        heardNumber               // 확인된 숫자 전달
       }),
     });
 
@@ -61,4 +82,3 @@ async function sendMessage() {
     addMessage("assistant", "서버 연결 오류가 발생했습니다.");
   }
 }
-
