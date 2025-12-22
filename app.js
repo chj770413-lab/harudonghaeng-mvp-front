@@ -28,7 +28,6 @@ function backHome() {
   heardNumber = null;
 }
 
-// 메시지 추가
 function addMessage(who, text) {
   const chatLog = document.getElementById("chatLog");
   const div = document.createElement("div");
@@ -36,16 +35,17 @@ function addMessage(who, text) {
   div.innerText = text;
   chatLog.appendChild(div);
   chatLog.scrollTop = chatLog.scrollHeight;
+
+  // 서버가 숫자 확인 단계로 들어가라고 했을 때
+  if (who === "bot" && text.includes("제가 이렇게 들었어요")) {
+    pendingNumericConfirm = true;
+  }
 }
 
-// 🔑 핵심: 사용자 입력 → confirmAction으로 변환
-function resolveConfirmAction(text) {
-  if (!pendingNumericConfirm) return null;
-
-  if (text === "맞아" || text === "네" || text === "예") return "yes";
-  if (text === "아니야" || text === "아니") return "no";
-  if (text.includes("응")) return "loose";
-
+function classifyConfirmAction(text) {
+  if (/^(맞아|네|예)$/i.test(text)) return "yes";
+  if (/^(아니야|아니|틀려|다시)$/i.test(text)) return "no";
+  if (/^(응|응 맞아|맞는 것 같아)$/i.test(text)) return "loose";
   return null;
 }
 
@@ -57,7 +57,9 @@ async function sendMessage() {
   addMessage("user", text);
   input.value = "";
 
-  const confirmAction = resolveConfirmAction(text);
+  const confirmAction = pendingNumericConfirm
+    ? classifyConfirmAction(text)
+    : null;
 
   try {
     const res = await fetch(API_URL, {
@@ -67,7 +69,7 @@ async function sendMessage() {
         message: text,
         mode: currentMode,
 
-        // ✅ 상태는 프론트가 책임진다
+        // 🔑 핵심: 서버로 정확한 상태 전달
         pendingNumericConfirm,
         heardNumber,
         confirmAction,
@@ -76,12 +78,10 @@ async function sendMessage() {
 
     const data = await res.json();
 
-    // ✅ 서버가 확인 단계라고 알려주면 상태 갱신
+    // 서버가 다시 확인 단계라고 알려주면 상태 갱신
     if (data.needConfirm === true) {
       pendingNumericConfirm = true;
-      heardNumber = Number.isFinite(data.heardNumber)
-        ? data.heardNumber
-        : null;
+      heardNumber = data.heardNumber ?? null;
     } else {
       pendingNumericConfirm = false;
       heardNumber = null;
