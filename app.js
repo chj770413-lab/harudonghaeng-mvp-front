@@ -1,11 +1,11 @@
 const API_URL = "https://harudonghaeng-ai-proxy.vercel.app/api/chat";
 
 let currentMode = "";
-let pendingNumericConfirm = false;
 
-// ----------------------------
+// 숫자 확인 단계 여부
+let isNumericConfirmMode = false;
+
 // 화면 전환
-// ----------------------------
 function go(mode) {
   currentMode = mode;
   document.getElementById("home").style.display = "none";
@@ -25,12 +25,9 @@ function backHome() {
   document.getElementById("chat").style.display = "none";
   document.getElementById("home").style.display = "block";
   document.getElementById("chatLog").innerHTML = "";
-  pendingNumericConfirm = false;
+  isNumericConfirmMode = false;
 }
 
-// ----------------------------
-// 메시지 출력
-// ----------------------------
 function addMessage(who, text) {
   const chatLog = document.getElementById("chatLog");
   const div = document.createElement("div");
@@ -39,63 +36,51 @@ function addMessage(who, text) {
   chatLog.appendChild(div);
   chatLog.scrollTop = chatLog.scrollHeight;
 
-  // 숫자 확인 단계 진입
+  // 🔒 AI가 숫자 확인 문구를 냈을 때만 확인 모드 진입
   if (who === "bot" && text.includes("제가 이렇게 들었어요")) {
-    pendingNumericConfirm = true;
+    isNumericConfirmMode = true;
   }
 }
 
-// ----------------------------
-// 메시지 전송 (핵심)
-// ----------------------------
 async function sendMessage() {
   const input = document.getElementById("msgInput");
-  const text = input.value.trim();
-  if (!text) return;
+  const userText = input.value.trim();
+  if (!userText) return;
+
+  addMessage("user", userText);
   input.value = "";
 
-  // ============================
-  // 🔴 핵심: 숫자 확인 단계
-  // ============================
-  if (pendingNumericConfirm) {
-    // 1️⃣ 맞아 / 응 맞아 / 아니야 → 화면에도 안 남김, 서버에도 안 보냄
+  // 🔴 핵심 차단 로직
+  // 숫자 확인 단계에서는 어떤 확인 발화도 서버로 보내지 않음
+  if (isNumericConfirmMode) {
+    // 사용자가 확인 의도로 말한 경우
     if (
-      text === "맞아" ||
-      text === "응 맞아" ||
-      text === "네" ||
-      text === "예"
+      userText.includes("맞아") ||
+      userText.includes("응") ||
+      userText.includes("그래")
     ) {
-      pendingNumericConfirm = false;
+      isNumericConfirmMode = false;
 
-      // 설명 요청만 서버로 보냄
+      // ❗ 서버에는 항상 동일한 문장만 보냄
       await sendToServer("확인된 수치에 대해 설명해 주세요.");
       return;
     }
 
-    if (text === "아니야" || text === "아니") {
-      pendingNumericConfirm = false;
-      addMessage("bot", "괜찮아요. 숫자를 다시 말씀해 주세요.");
+    // 수정 의도
+    if (userText.includes("아니")) {
+      isNumericConfirmMode = false;
+      addMessage(
+        "bot",
+        "괜찮아요. 숫자를 한 자리씩 천천히 다시 말씀해 주세요."
+      );
       return;
     }
-
-    // 그 외 말은 허용하지 않음
-    addMessage(
-      "bot",
-      "확인을 위해서요. 맞으면 '맞아', 아니면 '아니야'라고 말씀해 주세요."
-    );
-    return;
   }
 
-  // ============================
-  // 🔵 일반 대화 흐름
-  // ============================
-  addMessage("user", text);
-  await sendToServer(text);
+  // 🟢 일반 메시지
+  await sendToServer(userText);
 }
 
-// ----------------------------
-// 서버 호출 공통
-// ----------------------------
 async function sendToServer(text) {
   try {
     const res = await fetch(API_URL, {
@@ -104,7 +89,6 @@ async function sendToServer(text) {
       body: JSON.stringify({
         message: text,
         mode: currentMode,
-        pendingNumericConfirm: false,
       }),
     });
 
