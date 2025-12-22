@@ -1,14 +1,21 @@
 const API_URL = "https://harudonghaeng-ai-proxy.vercel.app/api/chat";
 
 let currentMode = "";
-
-// 🔒 숫자 확인 상태
 let pendingNumericConfirm = false;
-let lastHeardNumber = null;
+let heardNumber = null;
 
+// ✅ 대화 히스토리 (핵심)
+let messages = [];
+
+// ----------------------------
 // 화면 전환
+// ----------------------------
 function go(mode) {
   currentMode = mode;
+  messages = [];
+  pendingNumericConfirm = false;
+  heardNumber = null;
+
   document.getElementById("home").style.display = "none";
   document.getElementById("chat").style.display = "block";
 
@@ -19,7 +26,7 @@ function go(mode) {
       ? "오늘 건강 상태를 말씀해주세요."
       : "보호자에게 어떤 메시지를 전달할까요?";
 
-  addMessage("bot", startMessage);
+  addMessage("assistant", startMessage);
 }
 
 function backHome() {
@@ -27,20 +34,37 @@ function backHome() {
   document.getElementById("home").style.display = "block";
   document.getElementById("chatLog").innerHTML = "";
 
+  messages = [];
   pendingNumericConfirm = false;
-  lastHeardNumber = null;
+  heardNumber = null;
 }
 
-function addMessage(who, text) {
+// ----------------------------
+// 메시지 추가
+// ----------------------------
+function addMessage(role, text) {
   const chatLog = document.getElementById("chatLog");
   const div = document.createElement("div");
-  div.className = who === "bot" ? "bot-msg" : "user-msg";
+  div.className = role === "assistant" ? "bot-msg" : "user-msg";
   div.innerText = text;
   chatLog.appendChild(div);
   chatLog.scrollTop = chatLog.scrollHeight;
+
+  // ✅ 히스토리에 반드시 저장
+  messages.push({ role, content: text });
+
+  // 숫자 확인 단계 감지
+  if (role === "assistant" && text.includes("제가 이렇게 들었어요")) {
+    pendingNumericConfirm = true;
+
+    const match = text.match(/\d{2,3}/);
+    heardNumber = match ? Number(match[0]) : null;
+  }
 }
 
-// 🔥 핵심: 맞아/아니야는 AI로 보내지 않는다
+// ----------------------------
+// 메시지 전송
+// ----------------------------
 async function sendMessage() {
   const input = document.getElementById("msgInput");
   const text = input.value.trim();
@@ -49,61 +73,35 @@ async function sendMessage() {
   addMessage("user", text);
   input.value = "";
 
-  // ----------------------------
-  // 1️⃣ 숫자 확인 단계에서의 처리
-  // ----------------------------
-  if (pendingNumericConfirm) {
-    // ✅ 맞아 / 응 맞아 → AI 호출 ❌
-    if (/^(맞아|응\s*맞아|네|예)$/i.test(text)) {
-      pendingNumericConfirm = false;
-
-      // ✅ AI에게는 숫자만 다시 전달
-      await callAI(`확인된 수치는 ${lastHeardNumber}입니다.`);
-      return;
-    }
-
-    // ❌ 아니야 → 다시 숫자 말하게
-    if (/^(아니야|아니|틀려|다시)$/i.test(text)) {
-      pendingNumericConfirm = false;
-      lastHeardNumber = null;
-      addMessage(
-        "bot",
-        "괜찮아요. 숫자를 한 자리씩 천천히 말씀해 주세요.\n예를 들어 1, 4, 5 처럼요."
-      );
-      return;
-    }
-  }
-
-  // ----------------------------
-  // 2️⃣ 일반 입력 → AI로 전달
-  // ----------------------------
-  await callAI(text);
-}
-
-// 실제 AI 호출
-async function callAI(message) {
   try {
     const res = await fetch(API_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        message,
-        mode: currentMode,
+        message: text,
+
+        // ✅ 핵심 3종 세트
+        messages,
+        pendingNumericConfirm,
+        heardNumber,
       }),
     });
 
     const data = await res.json();
 
-    // ✅ 서버가 숫자 확인 요청을 보냈을 때
-    if (data.needConfirm && data.heardNumber) {
+    // 서버가 확인 단계라고 알려주면 상태 유지
+    if (data.needConfirm === true) {
       pendingNumericConfirm = true;
-      lastHeardNumber = data.heardNumber;
+      if (Number.isFinite(data.heardNumber)) {
+        heardNumber = data.heardNumber;
+      }
+    } else {
+      pendingNumericConfirm = false;
+      heardNumber = null;
     }
 
-    addMessage("bot", data.reply || "응답이 없습니다.");
+    addMessage("assistant", data.reply || "응답이 없습니다.");
   } catch (err) {
-    addMessage("bot", "서버 연결 오류가 발생했습니다.");
+    addMessage("assistant", "서버 연결 오류가 발생했습니다.");
   }
 }
-
-
