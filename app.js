@@ -2,16 +2,11 @@ const API_URL = "https://harudonghaeng-ai-proxy.vercel.app/api/chat";
 
 let currentMode = "";
 let pendingNumericConfirm = false;
-
-// ✅ 대화 기록 (이게 핵심)
-let messages = [];
+let heardNumber = null;
 
 // 화면 전환
 function go(mode) {
   currentMode = mode;
-  messages = [];
-  pendingNumericConfirm = false;
-
   document.getElementById("home").style.display = "none";
   document.getElementById("chat").style.display = "block";
 
@@ -22,32 +17,37 @@ function go(mode) {
       ? "오늘 건강 상태를 말씀해주세요."
       : "보호자에게 어떤 메시지를 전달할까요?";
 
-  addMessage("assistant", startMessage);
+  addMessage("bot", startMessage);
 }
 
 function backHome() {
   document.getElementById("chat").style.display = "none";
   document.getElementById("home").style.display = "block";
   document.getElementById("chatLog").innerHTML = "";
-  messages = [];
   pendingNumericConfirm = false;
+  heardNumber = null;
 }
 
-function addMessage(role, text) {
+function addMessage(who, text, meta = {}) {
   const chatLog = document.getElementById("chatLog");
   const div = document.createElement("div");
-  div.className = role === "assistant" ? "bot-msg" : "user-msg";
+  div.className = who === "bot" ? "bot-msg" : "user-msg";
   div.innerText = text;
   chatLog.appendChild(div);
   chatLog.scrollTop = chatLog.scrollHeight;
 
-  // ✅ 메시지 히스토리 저장
-  messages.push({ role, content: text });
-
-  // 숫자 확인 단계 진입
-  if (role === "assistant" && text.includes("제가 이렇게 들었어요")) {
+  // 서버가 확인 필요하다고 명시했을 때만 상태 갱신
+  if (who === "bot" && meta.needConfirm === true) {
     pendingNumericConfirm = true;
+    heardNumber = meta.heardNumber ?? null;
   }
+}
+
+function getConfirmAction(text) {
+  if (/^(맞아|네|예)$/i.test(text)) return "yes";
+  if (/^(아니야|아니|틀려|다시)$/i.test(text)) return "no";
+  if (/^(응|응 맞아|맞는 것 같아)$/i.test(text)) return "loose";
+  return null;
 }
 
 async function sendMessage() {
@@ -58,22 +58,36 @@ async function sendMessage() {
   addMessage("user", text);
   input.value = "";
 
+  const confirmAction = pendingNumericConfirm ? getConfirmAction(text) : null;
+
   try {
     const res = await fetch(API_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         message: text,
-        messages,                // ✅🔥 이 줄이 모든 문제의 해답
         mode: currentMode,
-        pendingNumericConfirm,   // 상태 전달
+
+        // ✅ 핵심 상태 3종 세트
+        pendingNumericConfirm,
+        heardNumber,
+        confirmAction,
       }),
     });
 
     const data = await res.json();
-    addMessage("assistant", data.reply || "응답이 없습니다.");
 
+    // 설명 단계로 들어가면 확인 상태 해제
+    if (data.needConfirm === false) {
+      pendingNumericConfirm = false;
+      heardNumber = null;
+    }
+
+    addMessage("bot", data.reply || "응답이 없습니다.", {
+      needConfirm: data.needConfirm,
+      heardNumber: data.heardNumber,
+    });
   } catch (err) {
-    addMessage("assistant", "서버 연결 오류가 발생했습니다.");
+    addMessage("bot", "서버 연결 오류가 발생했습니다.");
   }
 }
