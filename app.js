@@ -26,6 +26,7 @@ function backHome() {
   document.getElementById("home").style.display = "block";
   document.getElementById("chatLog").innerHTML = "";
 
+  // 초기화
   pendingNumericConfirm = false;
 }
 
@@ -40,10 +41,9 @@ function addMessage(who, text) {
   // ✅ AI가 숫자 확인 문구를 냈을 때만 확인 단계 ON
   if (who === "bot" && text.includes("제가 이렇게 들었어요")) {
     pendingNumericConfirm = true;
-    return;
   }
 
-  // ⭐ 핵심: AI가 설명 단계로 들어가면 확인 단계 OFF
+  // ✅ AI가 설명을 시작하면 확인 단계 OFF
   if (
     who === "bot" &&
     pendingNumericConfirm &&
@@ -61,9 +61,6 @@ async function sendMessage() {
   addMessage("user", text);
   input.value = "";
 
-  // ❌ 여기서 pendingNumericConfirm 절대 건드리지 않음
-  // (맞아/아니야는 서버가 처리해야 함)
-
   try {
     const res = await fetch(API_URL, {
       method: "POST",
@@ -72,7 +69,7 @@ async function sendMessage() {
         message: text,
         mode: currentMode,
 
-        // ✅ 서버에 현재 상태 그대로 전달
+        // ✅ 핵심: 서버에는 "현재 상태" 그대로 전달
         pendingNumericConfirm: pendingNumericConfirm,
       }),
     });
