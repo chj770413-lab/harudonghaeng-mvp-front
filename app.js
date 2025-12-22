@@ -25,8 +25,6 @@ function backHome() {
   document.getElementById("chat").style.display = "none";
   document.getElementById("home").style.display = "block";
   document.getElementById("chatLog").innerHTML = "";
-
-  // 초기화
   pendingNumericConfirm = false;
 }
 
@@ -38,12 +36,13 @@ function addMessage(who, text) {
   chatLog.appendChild(div);
   chatLog.scrollTop = chatLog.scrollHeight;
 
-  // ✅ AI가 숫자 확인 문구를 냈을 때만 확인 단계 ON
+  // ✅ 서버가 숫자 확인 문구를 냈을 때만 true
   if (who === "bot" && text.includes("제가 이렇게 들었어요")) {
     pendingNumericConfirm = true;
+    return;
   }
 
-  // ✅ AI가 설명을 시작하면 확인 단계 OFF
+  // ✅ 서버가 설명 단계로 들어갔다고 판단되는 순간에만 false
   if (
     who === "bot" &&
     pendingNumericConfirm &&
@@ -69,7 +68,7 @@ async function sendMessage() {
         message: text,
         mode: currentMode,
 
-        // ✅ 핵심: 서버에는 "현재 상태" 그대로 전달
+        // ✅ 상태는 그대로 서버에 전달
         pendingNumericConfirm: pendingNumericConfirm,
       }),
     });
