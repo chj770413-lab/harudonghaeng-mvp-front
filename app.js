@@ -60,6 +60,9 @@ async function sendMessage() {
   addMessage("user", text);
   input.value = "";
 
+  // ⚠️ 중요: 여기서는 pendingNumericConfirm를 절대 바꾸지 않는다
+  // → 서버로 "현재 상태" 그대로 보낸다
+
   try {
     const res = await fetch(API_URL, {
       method: "POST",
@@ -68,13 +71,18 @@ async function sendMessage() {
         message: text,
         mode: currentMode,
 
-        // ✅ 상태는 그대로 서버에 전달
+        // ✅ 현재 상태 그대로 서버에 전달
         pendingNumericConfirm: pendingNumericConfirm,
       }),
     });
 
     const data = await res.json();
     addMessage("bot", data.reply || "응답이 없습니다.");
+
+    // ✅ 서버 응답을 받은 뒤에만 상태 종료
+    if (pendingNumericConfirm && (text === "맞아" || text === "아니야")) {
+      pendingNumericConfirm = false;
+    }
   } catch (err) {
     addMessage("bot", "서버 연결 오류가 발생했습니다.");
   }
