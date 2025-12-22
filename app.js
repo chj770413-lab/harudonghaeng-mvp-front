@@ -2,7 +2,7 @@ const API_URL = "https://harudonghaeng-ai-proxy.vercel.app/api/chat";
 
 let currentMode = "";
 
-// ✅ 숫자 확인 단계 상태 (추가)
+// ✅ 숫자 확인 단계 상태
 let pendingNumericConfirm = false;
 
 // 화면 전환
@@ -26,7 +26,6 @@ function backHome() {
   document.getElementById("home").style.display = "block";
   document.getElementById("chatLog").innerHTML = "";
 
-  // 초기화
   pendingNumericConfirm = false;
 }
 
@@ -38,9 +37,18 @@ function addMessage(who, text) {
   chatLog.appendChild(div);
   chatLog.scrollTop = chatLog.scrollHeight;
 
-  // ✅ AI가 숫자 확인 문구를 냈으면 → 확인 단계 진입
+  // ✅ AI가 숫자 확인 문구를 냈을 때만 확인 단계 ON
   if (who === "bot" && text.includes("제가 이렇게 들었어요")) {
     pendingNumericConfirm = true;
+  }
+
+  // ✅ AI가 숫자 설명을 시작하면 확인 단계 OFF
+  if (
+    who === "bot" &&
+    pendingNumericConfirm &&
+    !text.includes("제가 이렇게 들었어요")
+  ) {
+    pendingNumericConfirm = false;
   }
 }
 
@@ -52,11 +60,6 @@ async function sendMessage() {
   addMessage("user", text);
   input.value = "";
 
-  // ✅ 사용자가 맞아/아니야를 말하면 → 확인 단계 종료
-  if (pendingNumericConfirm && (text === "맞아" || text === "아니야")) {
-    pendingNumericConfirm = false;
-  }
-
   try {
     const res = await fetch(API_URL, {
       method: "POST",
@@ -65,7 +68,7 @@ async function sendMessage() {
         message: text,
         mode: currentMode,
 
-        // ✅ 핵심: 서버에 상태 전달
+        // ✅ 핵심: 맞아/응 맞아를 보내는 순간에도 true 유지
         pendingNumericConfirm: pendingNumericConfirm,
       }),
     });
@@ -76,4 +79,3 @@ async function sendMessage() {
     addMessage("bot", "서버 연결 오류가 발생했습니다.");
   }
 }
-
