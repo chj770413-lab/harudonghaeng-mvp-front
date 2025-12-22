@@ -36,16 +36,18 @@ function addMessage(who, text) {
   chatLog.appendChild(div);
   chatLog.scrollTop = chatLog.scrollHeight;
 
-  // 서버가 숫자 확인 단계로 들어가라고 했을 때
+  // 서버가 숫자 확인 문구를 보냈을 때
   if (who === "bot" && text.includes("제가 이렇게 들었어요")) {
     pendingNumericConfirm = true;
+    const match = text.match(/\d{2,3}/);
+    heardNumber = match ? Number(match[0]) : null;
   }
 }
 
-function classifyConfirmAction(text) {
+function getConfirmAction(text) {
   if (/^(맞아|네|예)$/i.test(text)) return "yes";
   if (/^(아니야|아니|틀려|다시)$/i.test(text)) return "no";
-  if (/^(응|응 맞아|맞는 것 같아)$/i.test(text)) return "loose";
+  if (/응|맞는 것 같아/i.test(text)) return "loose";
   return null;
 }
 
@@ -58,7 +60,7 @@ async function sendMessage() {
   input.value = "";
 
   const confirmAction = pendingNumericConfirm
-    ? classifyConfirmAction(text)
+    ? getConfirmAction(text)
     : null;
 
   try {
@@ -69,7 +71,7 @@ async function sendMessage() {
         message: text,
         mode: currentMode,
 
-        // 🔑 핵심: 서버로 정확한 상태 전달
+        // ✅ 핵심 상태 신호들
         pendingNumericConfirm,
         heardNumber,
         confirmAction,
@@ -78,10 +80,10 @@ async function sendMessage() {
 
     const data = await res.json();
 
-    // 서버가 다시 확인 단계라고 알려주면 상태 갱신
+    // 서버가 다시 확인 단계 유지하라고 하면
     if (data.needConfirm === true) {
       pendingNumericConfirm = true;
-      heardNumber = data.heardNumber ?? null;
+      heardNumber = data.heardNumber ?? heardNumber;
     } else {
       pendingNumericConfirm = false;
       heardNumber = null;
