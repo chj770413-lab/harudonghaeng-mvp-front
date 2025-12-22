@@ -1,7 +1,12 @@
 const API_URL = "https://harudonghaeng-ai-proxy.vercel.app/api/chat";
 
 let currentMode = "";
+
+// ✅ 서버 확인 단계 상태
 let pendingNumericConfirm = false;
+
+// ✅ 서버가 내려준 "제가 이렇게 들었어요: N"의 N을 저장
+let heardNumber = null;
 
 // 화면 전환
 function go(mode) {
@@ -23,7 +28,9 @@ function backHome() {
   document.getElementById("chat").style.display = "none";
   document.getElementById("home").style.display = "block";
   document.getElementById("chatLog").innerHTML = "";
+
   pendingNumericConfirm = false;
+  heardNumber = null;
 }
 
 function addMessage(who, text) {
@@ -33,11 +40,15 @@ function addMessage(who, text) {
   div.innerText = text;
   chatLog.appendChild(div);
   chatLog.scrollTop = chatLog.scrollHeight;
+}
 
-  // ✅ 숫자 확인 문구가 나오면 확인 단계 진입
-  if (who === "bot" && text.includes("제가 이렇게 들었어요")) {
-    pendingNumericConfirm = true;
-  }
+function isConfirmText(t) {
+  const s = String(t).trim();
+  return (
+    s === "맞아" || s === "네" || s === "예" ||
+    s === "아니야" || s === "아니" ||
+    s === "응 맞아" || s === "응"
+  );
 }
 
 async function sendMessage() {
@@ -48,61 +59,45 @@ async function sendMessage() {
   addMessage("user", text);
   input.value = "";
 
-  /* =====================================================
-     🔴 핵심 차단 로직
-     숫자 확인 단계에서는 "맞아 / 응 맞아 / 아니야"를
-     서버로 절대 보내지 않는다
-  ===================================================== */
-  if (pendingNumericConfirm) {
-    // 느슨한 동의 포함 전부 여기서 소비
-    if (
-      text === "맞아" ||
-      text === "응 맞아" ||
-      text === "응" ||
-      text === "아니야"
-    ) {
-      // 확인 단계 종료
-      pendingNumericConfirm = false;
+  // ✅ 확인 단계에서 "응 맞아/맞아/아니야" 같은 말은
+  //    서버가 '확인 처리'로만 쓰도록 상태/숫자를 같이 보냄
+  const payload = {
+    message: text,
+    mode: currentMode,
 
-      // ❗ 서버에는 우리가 만든 '설명 요청'만 보냄
-      try {
-        const res = await fetch(API_URL, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            message: "확인된 수치에 대해 설명해 주세요.",
-            mode: currentMode,
-            pendingNumericConfirm: false,
-          }),
-        });
+    // ⭐ 핵심: 확인 단계 플래그 + 숫자
+    pendingNumericConfirm,
+    heardNumber,
+  };
 
-        const data = await res.json();
-        addMessage("bot", data.reply || "응답이 없습니다.");
-        return; // 🔴 여기서 반드시 종료
-      } catch (err) {
-        addMessage("bot", "서버 연결 오류가 발생했습니다.");
-        return;
-      }
-    }
-  }
-
-  /* =====================================================
-     🔵 일반 메시지 (숫자 확인 단계 아님)
-  ===================================================== */
   try {
     const res = await fetch(API_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        message: text,
-        mode: currentMode,
-        pendingNumericConfirm: false,
-      }),
+      body: JSON.stringify(payload),
     });
 
     const data = await res.json();
+
+    // ✅ 서버가 숫자 확인 단계라고 알려주면 저장
+    // data.needConfirm === true 이면 앞으로 "맞아/아니야"를 받는 상태
+    if (data.needConfirm === true) {
+      pendingNumericConfirm = true;
+      heardNumber = Number.isFinite(data.heardNumber) ? data.heardNumber : null;
+    }
+
+    // ✅ 서버가 확인 단계를 끝냈다고 판단되는 순간:
+    // - 설명 답변이 오면 needConfirm이 없으므로 pending 해제
+    if (pendingNumericConfirm && data.needConfirm !== true && isConfirmText(text)) {
+      // 사용자가 확인 입력을 했고, 서버가 확인 단계 종료 응답을 준 것
+      pendingNumericConfirm = false;
+      heardNumber = null;
+    }
+
     addMessage("bot", data.reply || "응답이 없습니다.");
   } catch (err) {
     addMessage("bot", "서버 연결 오류가 발생했습니다.");
   }
 }
+
+ 
