@@ -6,6 +6,9 @@ let currentMode = "";
 let pendingNumericConfirm = false;
 let heardNumber = null;
 
+// ✅ 세션 흐름 상태 (핵심)
+let sessionFlow = "free"; // "free" | "numeric"
+
 // ✅ 대화 히스토리
 let chatHistory = [];
 
@@ -35,6 +38,7 @@ function backHome() {
   // ✅ 초기화
   pendingNumericConfirm = false;
   heardNumber = null;
+  sessionFlow = "free";
   chatHistory = [];
 }
 
@@ -98,6 +102,7 @@ async function sendMessage() {
         heardNumber: heardNumber,
         confirmAction: action,
         mode: currentMode,
+        sessionFlow, // 🔒 numeric 유지
       }),
     });
 
@@ -108,6 +113,14 @@ async function sendMessage() {
     pendingNumericConfirm = data.needConfirm === true;
     if (data.needConfirm && data.heardNumber) {
       heardNumber = data.heardNumber;
+      sessionFlow = "numeric";
+    }
+
+    // 설명 완료 시 흐름 해제
+    if (data.sessionFlow === "free") {
+      sessionFlow = "free";
+      pendingNumericConfirm = false;
+      heardNumber = null;
     }
 
     return;
@@ -121,9 +134,10 @@ async function sendMessage() {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       message: text,
-      pendingNumericConfirm: false, // 🔒 안전 차단
+      pendingNumericConfirm: false,
       heardNumber: null,
       mode: currentMode,
+      sessionFlow, // 🔒 free 상태 전달
     }),
   });
 
@@ -136,5 +150,11 @@ async function sendMessage() {
   if (data.needConfirm && data.heardNumber) {
     pendingNumericConfirm = true;
     heardNumber = data.heardNumber;
+    sessionFlow = "numeric"; // 🔒 수치 흐름 진입
+  }
+
+  // 서버가 흐름 해제 시
+  if (data.sessionFlow === "free") {
+    sessionFlow = "free";
   }
 }
