@@ -72,7 +72,7 @@ function resolveConfirmAction(text) {
 }
 
 // =====================
-// 메시지 전송
+// 메시지 전송 (❗️에러 UX 완전 차단 버전)
 // =====================
 async function sendMessage() {
   const input = document.getElementById("msgInput");
@@ -82,79 +82,84 @@ async function sendMessage() {
   addMessage("user", text);
   input.value = "";
 
-  // =====================
-  // 🔴 숫자 확인 단계
-  // =====================
-  if (pendingNumericConfirm) {
-    const action = resolveConfirmAction(text);
+  try {
+    // =====================
+    // 🔴 숫자 확인 단계
+    // =====================
+    if (pendingNumericConfirm) {
+      const action = resolveConfirmAction(text);
 
-    if (!action) {
-      addMessage("bot", "맞으면 '맞아', 아니면 '아니야'라고 해주세요.");
+      if (!action) {
+        addMessage("bot", "맞으면 '맞아', 아니면 '아니야'라고 해주세요.");
+        return;
+      }
+
+      const res = await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          messageType: "numericConfirm",
+          pendingNumericConfirm: true,
+          heardNumber,
+          confirmAction: action,
+          mode: currentMode,
+          sessionFlow,
+        }),
+      });
+
+      // ❗ 서버 500/404 등 모든 실패를 여기서 잡음
+      if (!res.ok) throw new Error("server error");
+
+      const data = await res.json();
+      addMessage("bot", data.reply);
+
+      // 상태 갱신
+      pendingNumericConfirm = data.needConfirm === true;
+
+      if (data.needConfirm && data.heardNumber) {
+        heardNumber = data.heardNumber;
+        sessionFlow = "numeric";
+      } else {
+        // 설명 완료
+        pendingNumericConfirm = false;
+        heardNumber = null;
+        sessionFlow = "free";
+      }
+
       return;
     }
 
+    // =====================
+    // 🔵 일반 메시지
+    // =====================
     const res = await fetch(API_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        messageType: "numericConfirm",
-        pendingNumericConfirm: true,
-        heardNumber: heardNumber,
-        confirmAction: action,
+        message: text,
         mode: currentMode,
-        sessionFlow, // 🔒 numeric 유지
+        sessionFlow,
       }),
     });
+
+    if (!res.ok) throw new Error("server error");
 
     const data = await res.json();
     addMessage("bot", data.reply);
 
-    // 서버가 다시 확인 요청하면 유지
-    pendingNumericConfirm = data.needConfirm === true;
+    // 숫자 확인 진입
     if (data.needConfirm && data.heardNumber) {
+      pendingNumericConfirm = true;
       heardNumber = data.heardNumber;
       sessionFlow = "numeric";
     }
-
-    // 설명 완료 시 흐름 해제
-    if (data.sessionFlow === "free") {
-      sessionFlow = "free";
-      pendingNumericConfirm = false;
-      heardNumber = null;
-    }
-
-    return;
-  }
-
-  // =====================
-  // 🔵 일반 메시지
-  // =====================
-  const res = await fetch(API_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      message: text,
-      pendingNumericConfirm: false,
-      heardNumber: null,
-      mode: currentMode,
-      sessionFlow, // 🔒 free 상태 전달
-    }),
-  });
-
-  const data = await res.json();
-  addMessage("bot", data.reply);
-
-  // =====================
-  // 서버가 숫자 확인 요청 시
-  // =====================
-  if (data.needConfirm && data.heardNumber) {
-    pendingNumericConfirm = true;
-    heardNumber = data.heardNumber;
-    sessionFlow = "numeric"; // 🔒 수치 흐름 진입
-  }
-
-  // 서버가 흐름 해제 시
-  if (data.sessionFlow === "free") {
-    sessionFlow = "free";
+  } catch (e) {
+    // =====================
+    // ❌ 시스템/지연/오류 문구 완전 차단
+    // =====================
+    addMessage(
+      "bot",
+      "말씀해 주신 내용을 기준으로 계속 도와드릴게요. 조금만 더 알려주실 수 있을까요?"
+    );
   }
 }
