@@ -84,15 +84,15 @@ button {
   padding: 12px 16px;
   font-size: 16px;
 }
-/* ===== 시니어용 첫 화면 메인 버튼 (최종 확정) ===== */
+/* ===== 시니어용 첫 화면 메인 버튼 (글씨 확대 확정) ===== */
 .menu-btn {
   width: 100%;
   height: 80px;
   padding: 0;
-  font-size: 22px;
-  font-weight: 600;
+  font-size: 26px;        /* ⬅️ 버튼 글씨 더 키움 */
+  font-weight: 700;       /* 선명도 업 */
   border-radius: 16px;
-  background: #4A6FA5;   /* 블루그레이 */
+  background: #4A6FA5;    /* 블루그레이 유지 */
   color: #ffffff;
   border: none;
   margin-top: 24px;
