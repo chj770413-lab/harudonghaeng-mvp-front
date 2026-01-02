@@ -257,3 +257,16 @@ document.getElementById('dailyResult').innerText =
 }
 }
 
+const closingLines = [
+  "오늘은 여기까지 정리하면 충분합니다.",
+  "오늘 하루는 이 정도로 정리해 두겠습니다.",
+  "오늘 기록은 여기까지로 남겨두겠습니다.",
+  "오늘 상태는 이 정도로 정리됩니다.",
+  "오늘 하루는 이 정도로 마무리됩니다.",
+  "오늘은 이만 정리해 두어도 괜찮겠습니다.",
+  "오늘 기록은 이 정도로 충분해 보입니다."
+];
+
+function getClosingLine() {
+  return closingLines[Math.floor(Math.random() * closingLines.length)];
+}
