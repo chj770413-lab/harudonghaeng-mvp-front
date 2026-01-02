@@ -31,16 +31,38 @@ function go(mode) {
 }
 
 function backHome() {
-  document.getElementById("chat").style.display = "none";
-  document.getElementById("home").style.display = "block";
-  document.getElementById("chatLog").innerHTML = "";
+  // 🔹 음성 인식 중이면 종료
+  if (currentRecognition) {
+    try { currentRecognition.stop(); } catch (e) {}
+    currentRecognition = null;
+  }
 
-  // ✅ 초기화
+  // 🔹 모든 화면 숨기고 홈만 표시
+  const chat = document.getElementById("chat");
+  const daily = document.getElementById("daily");
+  const home = document.getElementById("home");
+
+  if (chat) chat.style.display = "none";
+  if (daily) daily.style.display = "none";
+  if (home) home.style.display = "block";
+
+  // 🔹 기존 채팅 초기화
+  const chatLog = document.getElementById("chatLog");
+  if (chatLog) chatLog.innerHTML = "";
+
+  // 🔹 하루안심정리 초기화
+  const dailyText = document.getElementById("dailyText");
+  const dailyResult = document.getElementById("dailyResult");
+  if (dailyText) dailyText.innerText = "";
+  if (dailyResult) dailyResult.innerText = "";
+
+  // 🔹 기존 상태값 초기화 (그대로 유지)
   pendingNumericConfirm = false;
   heardNumber = null;
   sessionFlow = "free";
   chatHistory = [];
 }
+
 
 // =====================
 // 메시지 출력 + 히스토리
