@@ -148,3 +148,23 @@ button {
 .voice-btn:active {
   opacity: 0.85;
 }
+/* ===== 홈으로 버튼 (보조 · 조용한 버튼) ===== */
+.home-btn {
+  width: 100%;
+  margin-top: 16px;
+  padding: 14px 0;
+
+  font-size: 18px;
+  font-weight: 500;
+
+  background: transparent;
+  color: #4A6FA5;          /* 브랜드 색 */
+  border: none;
+  border-radius: 12px;
+
+  cursor: pointer;
+}
+
+.home-btn:active {
+  background: #eef3f8;    /* 살짝 눌림 느낌 */
+}
