@@ -204,7 +204,6 @@ function startVoice() {
   const output = document.getElementById("dailyText");
   const result = document.getElementById("dailyResult");
 
-  // 🔹 말하기 다시 시작하면 항상 초기화
   if (output) output.innerText = "";
   if (result) result.innerText = "";
 
@@ -214,28 +213,44 @@ function startVoice() {
     currentRecognition = null;
   }
 
-  const recognition = new webkitSpeechRecognition();
+  // 🔹 브라우저 지원 체크
+  const SpeechRecognition =
+    window.SpeechRecognition || window.webkitSpeechRecognition;
+
+  if (!SpeechRecognition) {
+    if (output) {
+      output.innerText = "이 브라우저에서는 음성 인식이 지원되지 않습니다.";
+    }
+    return;
+  }
+
+  const recognition = new SpeechRecognition();
   currentRecognition = recognition;
 
   recognition.lang = "ko-KR";
-  recognition.continuous = true;      // 계속 듣기
-  recognition.interimResults = false; // 중간 결과 안 씀
+  recognition.continuous = true;
+  recognition.interimResults = false;
 
   recognition.onresult = (event) => {
     const transcript = Array.from(event.results)
       .map(r => r[0].transcript)
       .join(" ");
-
     if (output) output.innerText = transcript;
   };
 
-  // ❌ 여기서는 요약하지 않음
+  recognition.onerror = () => {
+    if (output) {
+      output.innerText = "잘 들리지 않았어요. 다시 한 번 말씀해 주세요.";
+    }
+  };
+
   recognition.onend = () => {
     console.log("🎤 음성 인식 종료");
   };
 
   recognition.start();
 }
+
 
 
   recognition = new SpeechRecognition();
