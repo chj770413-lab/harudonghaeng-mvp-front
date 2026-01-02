@@ -245,8 +245,11 @@ function startVoice() {
   };
 
   recognition.onend = () => {
-    console.log("🎤 음성 인식 종료");
-  };
+  const output = document.getElementById("dailyText");
+  if (output && output.innerText.trim()) {
+    sendDailySummary(output.innerText.trim());
+  }
+};
 
   recognition.start();
 }
