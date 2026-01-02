@@ -199,15 +199,42 @@ function goDaily() {
 let recognition;
 
 function startVoice() {
-  const output = document.getElementById("voiceText");
+  const output = document.getElementById("dailyText");
+  const result = document.getElementById("dailyResult");
 
-  const SpeechRecognition =
-    window.SpeechRecognition || window.webkitSpeechRecognition;
+  // 🔹 말하기 다시 시작하면 항상 초기화
+  if (output) output.innerText = "";
+  if (result) result.innerText = "";
 
-  if (!SpeechRecognition) {
-    output.innerText = "이 브라우저에서는 음성 인식이 지원되지 않습니다.";
-    return;
+  // 🔹 이전 음성 인식 종료
+  if (currentRecognition) {
+    try { currentRecognition.stop(); } catch (e) {}
+    currentRecognition = null;
   }
+
+  const recognition = new webkitSpeechRecognition();
+  currentRecognition = recognition;
+
+  recognition.lang = "ko-KR";
+  recognition.continuous = true;      // 계속 듣기
+  recognition.interimResults = false; // 중간 결과 안 씀
+
+  recognition.onresult = (event) => {
+    const transcript = Array.from(event.results)
+      .map(r => r[0].transcript)
+      .join(" ");
+
+    if (output) output.innerText = transcript;
+  };
+
+  // ❌ 여기서는 요약하지 않음
+  recognition.onend = () => {
+    console.log("🎤 음성 인식 종료");
+  };
+
+  recognition.start();
+}
+
 
   recognition = new SpeechRecognition();
   recognition.lang = "ko-KR";
