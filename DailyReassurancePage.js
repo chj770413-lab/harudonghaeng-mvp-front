@@ -1,57 +1,23 @@
-import { useState } from "react";
+function goDaily() {
+  document.getElementById("home").style.display = "none";
+  document.getElementById("chat").style.display = "none";
+  document.getElementById("daily").style.display = "block";
 
-function DailyReassurancePage() {
-  const [summary, setSummary] = useState(null);
-
-  const onSpeak = () => {
-    setSummary([
-      "오늘은 컨디션이 조금 떨어진 하루였어요.",
-      "지금 당장 크게 걱정할 상황은 아니에요.",
-      "오늘은 무리하지 않고 지내셔도 괜찮겠습니다."
-    ]);
-  };
-
-  return (
-    <div style={{ padding: 24, maxWidth: 420, margin: "0 auto" }}>
-      <h2>
-        오늘 몸이나 마음 상태를<br />
-        편하게 말씀해 주세요
-      </h2>
-
-      <button
-        onClick={onSpeak}
-        style={{
-          marginTop: 24,
-          width: "100%",
-          padding: "16px 0",
-          fontSize: 18
-        }}
-      >
-        🎤 말하기
-      </button>
-
-      {summary && (
-        <div style={{ marginTop: 24, lineHeight: 1.6 }}>
-          {summary.map((line, i) => (
-            <p key={i}>{line}</p>
-          ))}
-        </div>
-      )}
-
-      <p style={{ marginTop: 32, fontSize: 12, color: "#777" }}>
-        이 정리는 참고용이며 의료적 판단을 대신하지 않습니다.
-      </p>
-    </div>
-  );
+  document.getElementById("voiceText").innerText = "";
+  document.getElementById("dailyResult").innerHTML = "";
 }
 
-export default DailyReassurancePage;
+function backHome() {
+  document.getElementById("daily").style.display = "none";
+  document.getElementById("chat").style.display = "none";
+  document.getElementById("home").style.display = "block";
+}
+
 let recognition;
 
 function startVoice() {
   const output = document.getElementById("voiceText");
 
-  // 브라우저 지원 체크
   const SpeechRecognition =
     window.SpeechRecognition || window.webkitSpeechRecognition;
 
@@ -72,6 +38,13 @@ function startVoice() {
   recognition.onresult = function (event) {
     const transcript = event.results[0][0].transcript;
     output.innerText = `“${transcript}”`;
+
+    // 임시 안심 문장 (다음 단계에서 AI로 교체)
+    document.getElementById("dailyResult").innerHTML = `
+      <p>오늘은 전반적으로 무리 없는 하루로 보입니다.</p>
+      <p>지금 당장 크게 걱정할 상황은 아니에요.</p>
+      <p>오늘은 이 정도로 마무리하셔도 괜찮겠습니다.</p>
+    `;
   };
 
   recognition.onerror = function () {
