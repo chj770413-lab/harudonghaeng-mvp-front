@@ -66,3 +66,17 @@ button {
   padding: 12px 16px;
   font-size: 16px;
 }
+/* ===== 시니어용 첫 화면 메인 버튼 보정 ===== */
+.menu-btn {
+  height: 72px;          /* ⬅️ 핵심: 확실한 높이 */
+  padding: 0;            /* ⬅️ padding 영향 제거 */
+  font-size: 20px;       /* ⬅️ 글자 크게 */
+  font-weight: 600;
+  border-radius: 14px;
+  background: #a8876c;   /* 기존 색 유지 */
+}
+
+/* 눌렀을 때 반응 */
+.menu-btn:active {
+  opacity: 0.85;
+}
