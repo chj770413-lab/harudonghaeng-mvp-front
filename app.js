@@ -243,8 +243,12 @@ function startVoice() {
   recognition.interimResults = false;
   recognition.maxAlternatives = 1;
 
+ const output = document.getElementById("dailyText");
+if (output) {
   output.innerText = "말씀해 주세요…";
-  recognition.start();
+}
+recognition.start();
+
 
   recognition.onresult = function (event) {
     const transcript = event.results[0][0].transcript;
