@@ -24,6 +24,8 @@ body {
   background: white;
   border-radius: 18px;
   box-shadow: 0 4px 14px rgba(0,0,0,0.1);
+  transform: translateY(-40px);  /* ⬅️ 프레임 전체를 위로 */
+}
 }
 
 
