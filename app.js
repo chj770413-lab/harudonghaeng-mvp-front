@@ -210,3 +210,22 @@ function startVoice() {
     output.innerText = "잘 들리지 않았어요. 다시 한 번 말씀해 주세요.";
   };
 }
+async function sendDailySummary(text) {
+  try {
+    const res = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        message: text,
+        mode: 'daily-summary'
+      })
+    });
+
+    const data = await res.json();
+    document.getElementById('dailyResult').innerText = data.reply;
+  } catch (e) {
+    console.error('AI 요약 오류', e);
+    document.getElementById('dailyResult').innerText =
+      '오늘은 이 정도로 정리해도 괜찮겠습니다.';
+  }
+}
