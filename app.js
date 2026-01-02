@@ -209,15 +209,17 @@ function startVoice() {
 }
 async function sendDailySummary(text) {
   try {
-    const res = await fetch('https://harudonghaeng-ai-proxy.vercel.app/api/chat')
-, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        message: text,
-        mode: 'daily-summary'
-      })
-    });
+    const res = await fetch(
+      'https://harudonghaeng-ai-proxy.vercel.app/api/chat',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: text,
+          mode: 'daily-summary'
+        })
+      }
+    );
 
     const data = await res.json();
     console.log('📦 AI 응답 전체:', data);
@@ -237,3 +239,4 @@ async function sendDailySummary(text) {
       '오늘은 이 정도로 정리해도 괜찮겠습니다.';
   }
 }
+
