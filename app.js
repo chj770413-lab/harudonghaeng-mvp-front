@@ -242,8 +242,9 @@ function startVoice() {
     // 🔹 말이 들어올 때마다 침묵 타이머 리셋
     if (silenceTimer) clearTimeout(silenceTimer);
     silenceTimer = setTimeout(() => {
-      recognition.stop();   // ⏱️ 2초 침묵 후 종료
-    }, 2000);
+  recognition.stop();
+}, 2500); // ⏱️ 침묵 2.5초
+
   };
 
   recognition.onerror = () => {
