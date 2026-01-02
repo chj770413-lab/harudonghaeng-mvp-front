@@ -254,6 +254,26 @@ function startVoice() {
   recognition.start();
 }
 
+function stopVoice() {
+  // 🔹 마이크 끄기
+  if (currentRecognition) {
+    try { currentRecognition.stop(); } catch (e) {}
+    currentRecognition = null;
+  }
+
+  const output = document.getElementById("dailyText");
+  const result = document.getElementById("dailyResult");
+
+  // ✅ 요약 중이라는 표시 (체감 속도 개선)
+  if (result) {
+    result.innerText = "오늘 이야기를 정리하고 있어요…";
+  }
+
+  // 🔹 실제 요약 실행
+  if (output && output.innerText.trim()) {
+    sendDailySummary(output.innerText.trim());
+  }
+}
 
 
   recognition = new SpeechRecognition();
