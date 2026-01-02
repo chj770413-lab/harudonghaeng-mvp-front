@@ -206,7 +206,7 @@ function startVoice() {
 
   // 🔹 화면 초기화
   if (output) output.innerText = "";
-  if (result) result.innerText = "정리 중입니다…";
+ if (result) result.innerText = "조금만 기다려 주세요. 오늘 이야기를 정리하고 있어요.";
 
   // 🔹 이전 음성 인식 종료
   if (currentRecognition) {
