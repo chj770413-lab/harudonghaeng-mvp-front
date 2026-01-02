@@ -30,10 +30,12 @@ body {
 
 
 .title {
+  width: 100%;              /* ⬅️ 핵심 */
   text-align: center;
   font-size: 26px;
+  font-weight: 600;         /* ⬅️ 타이틀 느낌 강화 (선택이지만 추천) */
   margin-bottom: 20px;
-  color: #2F2F2F;   
+  color: #2F2F2F;
 }
 
 .menu-btn {
