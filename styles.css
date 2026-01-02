@@ -177,3 +177,14 @@ button {
   font-weight: 700;
   border-radius: 18px;
 }
+/* ===== 하루안심정리 결과 영역 ===== */
+#dailyResult {
+  margin-top: 28px;
+  padding: 24px;          /* ⬅️ 버튼보다 여유 */
+  background: #f4f6f8;
+  border-radius: 20px;    /* ⬅️ 버튼보다 더 둥글게 */
+
+  font-size: 18px;
+  line-height: 1.7;
+  color: #2F2F2F;
+}
