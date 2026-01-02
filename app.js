@@ -255,8 +255,12 @@ function startVoice() {
   };
 
   recognition.onerror = function () {
+  const output = document.getElementById("dailyText");
+  if (output) {
     output.innerText = "잘 들리지 않았어요. 다시 한 번 말씀해 주세요.";
-  };
+  }
+};
+
 
 async function sendDailySummary(text) {
   try {
