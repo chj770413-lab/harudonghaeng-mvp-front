@@ -199,11 +199,8 @@ function startVoice() {
     const transcript = event.results[0][0].transcript;
     output.innerText = `“${transcript}”`;
 
-    document.getElementById("dailyResult").innerHTML = `
-      <p>오늘은 전반적으로 무리 없는 하루로 보입니다.</p>
-      <p>지금 당장 크게 걱정할 상황은 아니에요.</p>
-      <p>오늘은 이 정도로 마무리하셔도 괜찮겠습니다.</p>
-    `;
+    sendDailySummary(transcript);
+
   };
 
   recognition.onerror = function () {
