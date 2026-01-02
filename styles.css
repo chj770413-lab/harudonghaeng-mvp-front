@@ -1,3 +1,15 @@
+/* ===== 하루안심정리 결과 영역 ===== */
+#dailyResult {
+  margin-top: 24px;
+  padding: 20px;
+
+  background: #f4f6f8;        /* 아주 연한 배경 */
+  border-radius: 16px;
+
+  font-size: 18px;
+  line-height: 1.6;
+  color: #2F2F2F;
+}
 
 body {
   font-family: Arial;
