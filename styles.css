@@ -29,14 +29,16 @@ body {
 }
 
 
+/* ===== 타이틀 중앙 정렬 확정 ===== */
 .title {
-  width: 100%;              /* ⬅️ 핵심 */
-  text-align: center;
+  width: 100%;              /* 핵심: 폭 고정 */
+  text-align: center;       /* 가운데 정렬 */
   font-size: 26px;
-  font-weight: 600;         /* ⬅️ 타이틀 느낌 강화 (선택이지만 추천) */
+  font-weight: 600;
   margin-bottom: 20px;
   color: #2F2F2F;
 }
+
 
 .menu-btn {
   width: 100%;
