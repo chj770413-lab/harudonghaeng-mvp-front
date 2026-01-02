@@ -209,7 +209,8 @@ function startVoice() {
 }
 async function sendDailySummary(text) {
   try {
-    const res = await fetch('/api/chat', {
+    const res = await fetch('https://harudonghaeng-ai-proxy.vercel.app/api/chat')
+, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
