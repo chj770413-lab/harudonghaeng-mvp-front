@@ -2,7 +2,7 @@ const API_URL = "https://harudonghaeng-ai-proxy.vercel.app/api/chat";
 
 let currentMode = "";
 let currentRecognition = null; // 🎤 현재 음성 인식 상태 저장
-
+let silenceTimer = null;       // ⏱️ 침묵 감지 타이머
 
 // ✅ 숫자 확인 상태
 let pendingNumericConfirm = false;
@@ -198,8 +198,7 @@ function goDaily() {
   document.getElementById("dailyResult").innerHTML = "";
 }
 
-let currentRecognition = null;
-let silenceTimer = null;
+
 
 function startVoice() {
   const output = document.getElementById("dailyText");
