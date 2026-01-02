@@ -209,13 +209,11 @@ function startVoice() {
 }
 async function sendDailySummary(text) {
   try {
-    const res = await fetch(
-      'https://harudonghaeng-ai-proxy.vercel.app/api/chat',
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({
-  message: `
+    const res = await fetch(API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        message: `
 다음은 한 사람의 하루 상태 기록입니다.
 대화하지 말고, 질문하지 말고, 조언하지 마세요.
 상대에게 말을 거는 표현(예: ~하셨군요, ~바랍니다)을 사용하지 마세요.
@@ -226,32 +224,33 @@ async function sendDailySummary(text) {
 [하루 상태 기록]
 ${text}
 `
-})
+      })
+    });
 
+    const data = await res.json();
+    console.log("📦 AI 응답 전체:", data);
 
+    let reply =
+      data.reply ||
+      data.message ||
+      data.result ||
+      data.choices?.[0]?.message?.content ||
+      "";
 
+    // 🔥 AI가 혹시 만들어낸 마무리/덕담 문장 제거 (안전장치)
+    reply = reply
+      .replace(/오늘은.*정도.*(충분|마무리).*습니다\.?/g, "")
+      .replace(/.*바랍니다\.?/g, "")
+      .trim();
 
-      }
-    );
+    document.getElementById("dailyResult").innerText =
+      reply + "\n" + getClosingLine();
 
-   const data = await res.json();
-console.log('📦 AI 응답 전체:', data);
-
-const reply =
-  data.reply ||
-  data.message ||
-  data.result ||
-  data.choices?.[0]?.message?.content ||
-  '';
-
-document.getElementById('dailyResult').innerText =
-  reply + "\n" + getClosingLine();
-
-} catch (e) {
-  console.error('AI 요약 오류', e);
-  document.getElementById('dailyResult').innerText =
-    getClosingLine();
-}
+  } catch (e) {
+    console.error("AI 요약 오류", e);
+    document.getElementById("dailyResult").innerText =
+      getClosingLine();
+  }
 }
 
 const closingLines = [
