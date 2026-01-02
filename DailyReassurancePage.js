@@ -46,3 +46,35 @@ function DailyReassurancePage() {
 }
 
 export default DailyReassurancePage;
+let recognition;
+
+function startVoice() {
+  const output = document.getElementById("voiceText");
+
+  // 브라우저 지원 체크
+  const SpeechRecognition =
+    window.SpeechRecognition || window.webkitSpeechRecognition;
+
+  if (!SpeechRecognition) {
+    output.innerText = "이 브라우저에서는 음성 인식이 지원되지 않습니다.";
+    return;
+  }
+
+  recognition = new SpeechRecognition();
+  recognition.lang = "ko-KR";
+  recognition.interimResults = false;
+  recognition.maxAlternatives = 1;
+
+  output.innerText = "말씀해 주세요…";
+
+  recognition.start();
+
+  recognition.onresult = function (event) {
+    const transcript = event.results[0][0].transcript;
+    output.innerText = `“${transcript}”`;
+  };
+
+  recognition.onerror = function () {
+    output.innerText = "잘 들리지 않았어요. 다시 한 번 말씀해 주세요.";
+  };
+}
