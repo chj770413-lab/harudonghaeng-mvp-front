@@ -214,10 +214,19 @@ async function sendDailySummary(text) {
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          message: text,
-          mode: 'daily-summary'
-        })
+       body: JSON.stringify({
+  message: `
+당신은 '하루동행'이라는 시니어 일상 동행 서비스의 AI입니다.
+의학적 판단이나 질문을 하지 않습니다.
+사용자의 하루 상태를 듣고, 안심이 되도록 3줄로 정리합니다.
+추가 질문, 조언, 상담은 하지 않습니다.
+마지막 문장은 반드시 "오늘은 이 정도면 충분합니다."로 끝냅니다.
+
+[사용자 하루 기록]
+${text}
+`
+})
+
       }
     );
 
