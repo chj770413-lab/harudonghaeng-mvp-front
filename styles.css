@@ -14,13 +14,15 @@ body {
 
 
 #app {
-  max-width: 450px;
+  max-width: 520px;        /* ⬅️ 한 단계 확대 */
+  width: 100%;
   margin: auto;
-  padding: 20px;
+  padding: 24px;
   background: white;
-  border-radius: 16px;
+  border-radius: 18px;
   box-shadow: 0 4px 14px rgba(0,0,0,0.1);
 }
+
 
 .title {
   text-align: center;
