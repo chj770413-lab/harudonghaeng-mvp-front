@@ -29,15 +29,19 @@ body {
 }
 
 
-/* ===== 타이틀 중앙 정렬 확정 ===== */
+/* ===== 타이틀 중앙 정렬 강제 ===== */
 .title {
-  width: 100%;              /* 핵심: 폭 고정 */
-  text-align: center;       /* 가운데 정렬 */
+  width: 100%;
+  display: flex;              /* ⬅️ 핵심 */
+  justify-content: center;    /* ⬅️ 핵심 */
+  align-items: center;
+
   font-size: 26px;
   font-weight: 600;
   margin-bottom: 20px;
   color: #2F2F2F;
 }
+
 
 
 .menu-btn {
