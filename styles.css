@@ -29,19 +29,17 @@ body {
 }
 
 
-/* ===== 타이틀 중앙 정렬 강제 ===== */
+/* ===== 타이틀(하루동행 챗봇) 중앙 정렬 최종 ===== */
 .title {
-  width: 100%;
-  display: flex;              /* ⬅️ 핵심 */
-  justify-content: center;    /* ⬅️ 핵심 */
-  align-items: center;
+  display: block;          /* inline 영향 제거 */
+  width: 100%;             /* 카드 전체 폭 사용 */
+  text-align: center;      /* 텍스트 중앙 */
 
   font-size: 26px;
   font-weight: 600;
-  margin-bottom: 20px;
+  margin: 0 auto 20px auto;
   color: #2F2F2F;
 }
-
 
 
 .menu-btn {
