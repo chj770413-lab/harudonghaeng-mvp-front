@@ -198,14 +198,16 @@ function goDaily() {
   document.getElementById("dailyResult").innerHTML = "";
 }
 
-let recognition;
+let currentRecognition = null;
+let silenceTimer = null;
 
 function startVoice() {
   const output = document.getElementById("dailyText");
   const result = document.getElementById("dailyResult");
 
+  // 🔹 화면 초기화
   if (output) output.innerText = "";
-  if (result) result.innerText = "";
+  if (result) result.innerText = "정리 중입니다…";
 
   // 🔹 이전 음성 인식 종료
   if (currentRecognition) {
@@ -235,7 +237,14 @@ function startVoice() {
     const transcript = Array.from(event.results)
       .map(r => r[0].transcript)
       .join(" ");
+
     if (output) output.innerText = transcript;
+
+    // 🔹 말이 들어올 때마다 침묵 타이머 리셋
+    if (silenceTimer) clearTimeout(silenceTimer);
+    silenceTimer = setTimeout(() => {
+      recognition.stop();   // ⏱️ 2초 침묵 후 종료
+    }, 2000);
   };
 
   recognition.onerror = () => {
@@ -245,11 +254,10 @@ function startVoice() {
   };
 
   recognition.onend = () => {
-  const output = document.getElementById("dailyText");
-  if (output && output.innerText.trim()) {
-    sendDailySummary(output.innerText.trim());
-  }
-};
+    if (output && output.innerText.trim()) {
+      sendDailySummary(output.innerText.trim());
+    }
+  };
 
   recognition.start();
 }
