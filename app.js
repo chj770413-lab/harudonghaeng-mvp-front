@@ -1,6 +1,8 @@
 const API_URL = "https://harudonghaeng-ai-proxy.vercel.app/api/chat";
 
 let currentMode = "";
+let currentRecognition = null; // 🎤 현재 음성 인식 상태 저장
+
 
 // ✅ 숫자 확인 상태
 let pendingNumericConfirm = false;
