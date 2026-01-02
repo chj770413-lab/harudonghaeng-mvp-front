@@ -104,3 +104,9 @@ button {
 .menu-btn:active {
   opacity: 0.85;
 }
+/* ===== 타이틀 중앙 정렬 최종 해결 ===== */
+.title-wrap {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
