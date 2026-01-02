@@ -237,22 +237,23 @@ ${text}
       }
     );
 
-    const data = await res.json();
-    console.log('📦 AI 응답 전체:', data);
+   const data = await res.json();
+console.log('📦 AI 응답 전체:', data);
 
-    const reply =
-      data.reply ||
-      data.message ||
-      data.result ||
-      data.choices?.[0]?.message?.content ||
-      '오늘은 이 정도로 정리해도 괜찮겠습니다.';
+const reply =
+  data.reply ||
+  data.message ||
+  data.result ||
+  data.choices?.[0]?.message?.content ||
+  '';
 
-    document.getElementById('dailyResult').innerText = reply;
+document.getElementById('dailyResult').innerText =
+  reply + "\n" + getClosingLine();
 
-  } catch (e) {
-    console.error('AI 요약 오류', e);
-    document.getElementById('dailyResult').innerText =
-      '오늘은 이 정도로 정리해도 괜찮겠습니다.';
-  }
+} catch (e) {
+  console.error('AI 요약 오류', e);
+  document.getElementById('dailyResult').innerText =
+    getClosingLine();
+}
 }
 
