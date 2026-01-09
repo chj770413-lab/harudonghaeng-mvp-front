@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>하루동행 음성</title>
+  <style>
+    body {
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont;
+      background: #ffffff;
+    }
+    h1 {
+      font-size: 28px;
+      margin-bottom: 40px;
+    }
+    button {
+      width: 140px;
+      height: 140px;
+      border-radius: 50%;
+      font-size: 48px;
+      border: none;
+      background: #2f80ed;
+      color: white;
+    }
+    button.recording {
+      background: #eb5757;
+    }
+    p {
+      margin-top: 30px;
+      font-size: 14px;
+      color: #777;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>말씀해 주세요.</h1>
+
+  <button id="micBtn">🎤</button>
+
+  <p>천천히 말씀하셔도 괜찮아요.</p>
+
+  <script>
+    let mediaRecorder;
+    let audioChunks = [];
+    let isRecording = false;
+
+    const micBtn = document.getElementById("micBtn");
+
+    micBtn.onclick = async () => {
+      if (!isRecording) {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        mediaRecorder = new MediaRecorder(stream);
+        audioChunks = [];
+
+        mediaRecorder.ondataavailable = e => {
+          audioChunks.push(e.data);
+        };
+
+        mediaRecorder.onstop = async () => {
+          const audioBlob = new Blob(audioChunks, { type: "audio/webm" });
+
+          // 👉 여기서 서버로 전송 (다음 단계에서 연결)
+          console.log("녹음 완료", audioBlob);
+
+          // 임시 확인용
+          alert("녹음이 끝났어요.");
+        };
+
+        mediaRecorder.start();
+        isRecording = true;
+        micBtn.classList.add("recording");
+      } else {
+        mediaRecorder.stop();
+        isRecording = false;
+        micBtn.classList.remove("recording");
+      }
+    };
+  </script>
+
+</body>
+</html>
