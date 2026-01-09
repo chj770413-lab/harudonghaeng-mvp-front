@@ -65,7 +65,13 @@
 
         mediaRecorder.onstop = async () => {
           const audioBlob = new Blob(audioChunks, { type: "audio/webm" });
+const res = await fetch("/api/stt", {
+    method: "POST",
+    body: audioBlob,
+  });
 
+  const data = await res.json();
+  alert("인식된 문장:\n" + data.text);
         };
 
         mediaRecorder.start();
