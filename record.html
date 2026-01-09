@@ -65,7 +65,10 @@
 
         mediaRecorder.onstop = async () => {
           const audioBlob = new Blob(audioChunks, { type: "audio/webm" });
-
+// 🔍 확인용: 방금 녹음한 소리 재생
+  const audioURL = URL.createObjectURL(audioBlob);
+  const audio = new Audio(audioURL);
+  audio.play();
           // 👉 여기서 서버로 전송 (다음 단계에서 연결)
           console.log("녹음 완료", audioBlob);
 
