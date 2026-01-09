@@ -3,13 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>하루동행 음성</title>const res = await fetch("/api/stt", {
-    method: "POST",
-    body: audioBlob,
-  });
+  <title>하루동행 음성</title>
 
-  const data = await res.json();
-  alert("인식된 문장:\n" + data.text);
   <style>
     body {
       margin: 0;
@@ -44,6 +39,7 @@
     }
   </style>
 </head>
+
 <body>
 
   <h1>말씀해 주세요.</h1>
@@ -71,7 +67,7 @@
 
         mediaRecorder.onstop = async () => {
           const audioBlob = new Blob(audioChunks, { type: "audio/webm" });
-          
+
           const res = await fetch("/api/stt", {
             method: "POST",
             body: audioBlob,
