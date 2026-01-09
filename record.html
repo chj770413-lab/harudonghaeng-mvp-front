@@ -67,7 +67,7 @@
 
         mediaRecorder.onstop = async () => {
           const audioBlob = new Blob(audioChunks, { type: "audio/webm" });
-
+          alert("① 서버로 전송 시작");   // ← record.html
           const res = await fetch("/api/stt", {
             method: "POST",
             body: audioBlob,
