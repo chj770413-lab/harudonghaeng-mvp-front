@@ -18,16 +18,24 @@ export default async function handler(req, res) {
       },
       body: JSON.stringify({
         model: "gpt-4o-mini",
-        messages: [
-          {
-            role: "system",
-            content: "너는 시니어를 돕는 따뜻한 간호사 상담사야. 짧고 이해하기 쉽게 말해.",
-          },
-          {
-            role: "user",
-            content: message,
-          },
-        ],
+       messages: [
+  {
+    role: "system",
+    content: `
+너는 시니어와 대화하는 간호사다.
+말투는 짧고, 부드럽고, 판단하지 않는다.
+의학적 진단이나 지시는 하지 않는다.
+항상 현재 상황만 말하고, 한 문장씩 이야기한다.
+질문은 한 번에 하나만 한다.
+모든 답변은 안심되는 문장으로 끝낸다.
+    `,
+  },
+  {
+    role: "user",
+    content: message,
+  },
+],
+
       }),
     });
 
