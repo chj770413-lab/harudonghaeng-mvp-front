@@ -49,6 +49,15 @@
   <p>천천히 말씀하셔도 괜찮아요.</p>
 
  <script>
+   function speak(text) {
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.lang = "ko-KR";
+  utterance.rate = 0.9;   // 시니어에게 편한 속도
+  utterance.pitch = 1.0;
+  speechSynthesis.cancel(); // 이전 음성 중단
+  speechSynthesis.speak(utterance);
+}
+
   const micBtn = document.getElementById("micBtn");
 
   const SpeechRecognition =
