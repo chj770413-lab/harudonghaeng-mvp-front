@@ -79,27 +79,25 @@
     console.log("🎤 음성 인식 시작");
   };
 
-  // 🗣️ 결과 인식
   recognition.onresult = async (event) => {
-    const text = event.results[0][0].transcript;
-    console.log("인식된 문장:", text);
+  const text = event.results[0][0].transcript;
+  console.log("인식된 문장:", text);
 
-    try {
-      const res = await fetch("/api/chat", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      body: JSON.stringify({ message: text }),
- 
-      });
+  try {
+    const res = await fetch("/api/chat", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ message: text }), // ✅ 여기!
+    });
 
-      const data = await res.json();
-      alert(data.reply);
-    } catch (e) {
-      alert("서버 오류가 발생했어요.");
-    }
-  };
+    const data = await res.json();
+    alert(data.reply);
+  } catch (e) {
+    alert("서버 오류가 발생했어요.");
+  }
+};
 
   // ❌ 오류 처리
   recognition.onerror = (event) => {
