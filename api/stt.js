@@ -27,7 +27,7 @@ export default async function handler(req, res) {
     const buffer = Buffer.concat(chunks);
 
     // 2️⃣ 임시 파일로 저장 (Node에서 가장 안정적)
-    const tempFilePath = path.join(tmpdir(), `audio-${Date.now()}.webm`);
+    const tempFilePath = path.join(tmpdir(), `audio-${Date.now()}.wav`);
     fs.writeFileSync(tempFilePath, buffer);
 
     // 3️⃣ Whisper STT
