@@ -49,48 +49,52 @@
   <p>천천히 말씀하셔도 괜찮아요.</p>
 
   <script>
-    let mediaRecorder;
-    let audioChunks = [];
-    let isRecording = false;
+  const micBtn = document.getElementById("micBtn");
 
-    const micBtn = document.getElementById("micBtn");
+  // Web Speech API
+  const SpeechRecognition =
+    window.SpeechRecognition || window.webkitSpeechRecognition;
 
-    micBtn.onclick = async () => {
-      if (!isRecording) {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-     mediaRecorder = new MediaRecorder(stream, {
-  mimeType: "audio/webm;codecs=opus"
-});
-audioChunks = [];
+  if (!SpeechRecognition) {
+    alert("이 브라우저는 음성 인식을 지원하지 않습니다. 크롬을 사용해 주세요.");
+  }
 
-        mediaRecorder.ondataavailable = e => {
-          audioChunks.push(e.data);
-        };
+  const recognition = new SpeechRecognition();
+  recognition.lang = "ko-KR";
+  recognition.interimResults = false;
+  recognition.maxAlternatives = 1;
 
-        mediaRecorder.onstop = async () => {
-          const audioBlob = new Blob(audioChunks, { type: "audio/webm" });
-          alert("① 서버로 전송 시작");   // ← record.html
-          const res = await fetch("/api/stt", {
-            method: "POST",
-            body: audioBlob,
-          });
+  let isListening = false;
 
-          alert("② 서버 응답 도착");     // ← record.html
-          
-          const data = await res.json();
-          alert("인식된 문장:\n" + data.text);
-        };
+  micBtn.onclick = () => {
+    if (!isListening) {
+      recognition.start();
+      isListening = true;
+      micBtn.classList.add("recording");
+    } else {
+      recognition.stop();
+      isListening = false;
+      micBtn.classList.remove("recording");
+    }
+  };
 
-        mediaRecorder.start();
-        isRecording = true;
-        micBtn.classList.add("recording");
-      } else {
-        mediaRecorder.stop();
-        isRecording = false;
-        micBtn.classList.remove("recording");
-      }
-    };
-  </script>
+  recognition.onresult = (event) => {
+    const text = event.results[0][0].transcript;
+    alert("인식된 문장:\n" + text);
+  };
+
+  recognition.onerror = (event) => {
+    alert("음성 인식 오류: " + event.error);
+    micBtn.classList.remove("recording");
+    isListening = false;
+  };
+
+  recognition.onend = () => {
+    micBtn.classList.remove("recording");
+    isListening = false;
+  };
+</script>
+
 
 </body>
 </html>
