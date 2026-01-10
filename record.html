@@ -48,10 +48,9 @@
 
   <p>천천히 말씀하셔도 괜찮아요.</p>
 
-  <script>
+ <script>
   const micBtn = document.getElementById("micBtn");
 
-  // Web Speech API
   const SpeechRecognition =
     window.SpeechRecognition || window.webkitSpeechRecognition;
 
@@ -63,49 +62,58 @@
   recognition.lang = "ko-KR";
   recognition.interimResults = false;
   recognition.maxAlternatives = 1;
+  recognition.continuous = false;
 
   let isListening = false;
 
+  // ✅ 버튼은 start만 담당 (stop은 이벤트에서만)
   micBtn.onclick = () => {
-    if (!isListening) {
-      recognition.start();
-      isListening = true;
-      micBtn.classList.add("recording");
-    } else {
-      recognition.stop();
-      isListening = false;
-      micBtn.classList.remove("recording");
+    if (isListening) return;
+    recognition.start();
+  };
+
+  // 🎤 음성 인식 시작
+  recognition.onstart = () => {
+    isListening = true;
+    micBtn.classList.add("recording");
+    console.log("🎤 음성 인식 시작");
+  };
+
+  // 🗣️ 결과 인식
+  recognition.onresult = async (event) => {
+    const text = event.results[0][0].transcript;
+    console.log("인식된 문장:", text);
+
+    try {
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ text }),
+      });
+
+      const data = await res.json();
+      alert(data.reply);
+    } catch (e) {
+      alert("서버 오류가 발생했어요.");
     }
   };
 
- recognition.onresult = async (event) => {
-  const text = event.results[0][0].transcript;
-
-  const res = await fetch("/api/chat", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ text }),
-  });
-
-  const data = await res.json();
-  alert(data.reply);
-};
-
-
+  // ❌ 오류 처리
   recognition.onerror = (event) => {
     alert("음성 인식 오류: " + event.error);
-    micBtn.classList.remove("recording");
     isListening = false;
+    micBtn.classList.remove("recording");
   };
 
+  // 🛑 인식 종료
   recognition.onend = () => {
-    micBtn.classList.remove("recording");
     isListening = false;
+    micBtn.classList.remove("recording");
+    console.log("🎤 음성 인식 종료");
   };
 </script>
-
 
 </body>
 </html>
