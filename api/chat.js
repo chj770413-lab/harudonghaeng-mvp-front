@@ -10,7 +10,16 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { text } = req.body;
+    // ✅ body가 없을 경우 대비
+    const body = typeof req.body === "string"
+      ? JSON.parse(req.body)
+      : req.body;
+
+    const text = body?.text;
+
+    if (!text) {
+      return res.status(400).json({ error: "No text provided" });
+    }
 
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
