@@ -1,50 +1,39 @@
-import OpenAI from "openai";
-
-export const config = {
-  api: {
-    bodyParser: true,
-  },
-};
-
-const client = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
-
 export default async function handler(req, res) {
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
-  }
-
   try {
-    const { text } = req.body;
-    if (!text) {
-      return res.status(400).json({ error: "No text provided" });
+    const { message } = req.body;
+
+    if (!process.env.OPEN_API_KEY) {
+      return res.status(500).json({ error: "API key missing" });
     }
 
-    const response = await client.responses.create({
-      model: "gpt-4.1-mini",
-      input: [
-        {
-          role: "system",
-          content:
-            "너는 ‘하루동행’의 간호사다. 진단이나 지시는 하지 않는다. 오늘 하루를 정리해 주는 한 문장으로만 답한다. 말투는 차분하고 따뜻하다.",
-        },
-        {
-          role: "user",
-          content: text,
-        },
-      ],
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${process.env.OPEN_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: "당신은 시니어를 돕는 따뜻한 간호사입니다.",
+          },
+          {
+            role: "user",
+            content: message,
+          },
+        ],
+      }),
     });
 
-    // 최신 Responses API에서 가장 안전한 추출
-    const reply =
-      response.output_text ||
-      response.output?.[0]?.content?.[0]?.text ||
-      "잠시만요, 다시 한 번 말씀해 주세요.";
+    const data = await response.json();
 
-    res.status(200).json({ reply });
-  } catch (error) {
-    console.error("CHAT ERROR:", error);
-    res.status(500).json({ error: error.message || "CHAT failed" });
+    res.status(200).json({
+      reply: data.choices[0].message.content,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server error" });
   }
 }
